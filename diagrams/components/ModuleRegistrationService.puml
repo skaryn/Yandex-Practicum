@@ -1,0 +1,34 @@
+@startuml
+title WarmHouseSystem ModuleRegistrationService Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+
+Container_Boundary(WarmHouseSystem, "WarmHouse система") {
+  Container(ModuleRegistrationService, "ModuleRegistrationService", "", "Сервис регистрации устройств")
+  Container(API, "API SaaS приложения", "", "Интерфейс бэкенда приложения")
+  ContainerDb(db, "Database", "PostgreSQL", "Хранит данные приложения")
+  Container(LogService, "Сервис логирования", "")
+}
+
+Container(ModuleRegistrationService, "Web Application", "") {
+  Component(LogController, "LogController", "Запись логов событий и ошибок")
+  Component(DBController, "DBController", "Взаимодействие с БД")
+  Component(ModuleRegistrationController, "ModuleRegistrationController", "Управление регистрацией устройств в системе")
+  Component(ModuleConnectorController, "ModuleConnectorController", "Взаимодествие с модуями")
+}
+
+System_Ext(apiModules, "API управляемых модулей", "External API for fitness data integration")
+
+Rel(API,ModuleRegistrationService,"JSON/HTTPS")
+Rel(DBController,db,"TCP","CRUD")
+Rel(LogController, LogService, "gRPC")
+Rel(ModuleConnectorController, apiModules, "")
+Rel(ModuleRegistrationController,LogController , "")
+Rel(ModuleRegistrationController,DBController , "")
+Rel(ModuleRegistrationController,ModuleConnectorController , "")
+
+
+@enduml

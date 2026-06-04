@@ -1,0 +1,55 @@
+@startuml
+
+title WarmHouseSystem Module Registration Controller Code Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+class ModuleRegistrationController {
+    +void CreateSensor()
+    +void DeleteSensor()
+}
+
+class LogController {
+    +void addEvent()
+    +void addError()
+}
+
+class DBController {
+    +void DBCreateSensor()
+    +void DBDeleteSensor()
+}
+
+class ModuleConnectorController {
+    +int checkSensor(sensorConnectionParams)
+}
+
+class Sensor {
+  + ID: int
+  + Name: string
+  + Type: SensorType
+  + Location: string
+  + Value: float64
+  + Unit: string
+  + Status: string
+  + LastUpdated: time.Time
+  + CreatedAt: time.Time
+  + sensorAPIConnestionAdress: json
+}
+
+  class SensorType <<enum>> {
+    + TEMPERATURE
+    + HUMIDITY
+    + PRESSURE
+  }
+
+    ModuleRegistrationController --> LogController : "Вызывает"
+    ModuleRegistrationController --> DBController : "Вызывает"
+    ModuleRegistrationController --> ModuleConnectorController : "Вызывает"
+    DBController --> Sensor : "Использует"
+    ModuleConnectorController --> Sensor : "Использует"
+    Sensor --> SensorType : "Содержит"
+    
+
+@enduml

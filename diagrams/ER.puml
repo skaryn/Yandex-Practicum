@@ -1,0 +1,82 @@
+@startuml ER-диаграмма WarmHouse
+
+' Сущности
+entity "user" as user {
+  *user_id : integer <<generated>>
+  --
+  *username : varchar(50)
+  *isAdmin : boolean
+  password_hash : varchar(255)
+  created_at : timestamp
+}
+
+entity "house" as house {
+  *house_id : integer <<generated>>
+  --
+  *housename : varchar(50)
+  created_at : timestamp
+}
+
+entity "device" as device {
+  *device_id : integer <<generated>>
+  --
+  *type_id : integer <<FK>>
+  name : varchar(100)
+  state : integer
+  serial_number : varchar(50)
+}
+
+entity "sensor" as sensor {
+  *sensor_id : integer <<generated>>
+  --
+  *house_id : integer <<FK>>
+  *name : varchar(50)
+  *type_id : integer <<FK>>
+  *location : varchar(100)
+  last_value : float
+  status : varchar(20)
+  *created_at : timestamp
+  updated_at : timestamp
+  *sensorAPIConnestionAdress: json
+}
+
+entity "sensorTelemetry" as sensorTelemetry {
+  *sensor_id : integer <<FK>>
+  --
+  last_value : float
+  *unit_type_id : int <<FK>>
+  updated_at : timestamp
+}
+
+entity "DeviceType" as DeviceType {
+  *type_id : integer <<generated>>
+  --
+  *name : varchar(100)
+  description : text
+}
+
+entity "SensorType" as SensorType {
+  *type_id : integer <<generated>>
+  --
+  *name : varchar(100)
+  description : text
+}
+
+entity "UnitType" as UnitType {
+  *unit_type_id : integer <<generated>>
+  --
+  *name : varchar(100)
+  description : text
+}
+
+'Связи
+user ||--o{ house : "owns"
+house ||--o{ device : "contains"
+device ||--o{ sensor : "contains"
+sensor ||--o{ sensorTelemetry : "publishes"
+device }o--|| DeviceType : "have"
+sensor }o--|| SensorType : "have"
+sensorTelemetry }o--|| UnitType : "have"
+
+
+@enduml

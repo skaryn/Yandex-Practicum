@@ -1,0 +1,61 @@
+@startuml
+title WarmHouse Container Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "Пользователь")
+Person(admin, "Administrator", "Работник настраивающий работу системы")
+System(WarmHouseSystem, "WarmHouse система", "Управляет, настраивает и мониторит датчики. Взаимодействует с БД. Выдаёт логи ошибок")
+
+Container_Boundary(WarmHouseSystem, "WarmHouse система") {
+  Container(WebApp, "Клиент пользовательского приложения", "")
+  Container(AdminApp, "Клиент административного приложения", "")
+  Container(API, "API SaaS приложения", "")
+  Container(AuthService, "Сервис авторизации", "")
+  Container(DataFetchService, "Сервис сбора данных с датчиков", "")
+  Container(ModuleRegistrationService, "Сервис регистрации устройств", "")
+  Container(ModuleService, "Сервис управления устройствами", "")
+  Container(MonitoringService, "Сервис отображения показателей и состояния устройств", "")
+  Container(LogService, "Сервис логирования", "")
+  ContainerQueue(queue, "Брокер сообщений")
+  ContainerDb(db, "Database", "PostgreSQL", "Хранит данные приложения")
+}
+
+
+System_Ext(apiModules, "API управляемых модулей")
+
+Rel(user, WebApp, "Смотрит через приложение показатели датчиков. Настраивает поведение")
+Rel(admin, AdminApp,"Администрирует систему")
+Rel(WebApp, API,"")
+Rel(AdminApp, API,"")
+
+Rel(API, AuthService,"Регистирует, авторизует и аутентифицирует пользователей")
+Rel(AuthService, queue, "")
+Rel(AuthService,db,"CRUD для пользовательских УЗ")
+
+Rel(API, ModuleRegistrationService,"Управляет регистрацией устройств")
+Rel(ModuleRegistrationService, queue, "")
+Rel(ModuleRegistrationService,db,"")
+
+Rel(API, MonitoringService,"Транслирует показатели передаваемые устройствами")
+Rel(MonitoringService, queue, "")
+Rel(MonitoringService,db,"")
+
+Rel(API, ModuleService,"Управляет параметрами устройств")
+Rel(ModuleService, queue, "")
+Rel(ModuleService,db,"")
+
+Rel(DataFetchService, queue, "")
+
+Rel(queue, LogService,"")
+Rel(LogService, db,  "сохраняет данные из очередей в базу")
+
+
+Rel(ModuleService,apiModules,"Передает параметры управления на устройства")
+Rel(ModuleRegistrationService,apiModules,"Регистрирует устройства в системе")
+Rel(MonitoringService,apiModules,"Отображает данные с датчиков")
+Rel(DataFetchService,apiModules,"Собирает данные с датчиков")
+@enduml
+

@@ -1,0 +1,144 @@
+asyncapi: '3.0.0'
+info:
+  title: NATS
+  version: '1.0.0'
+  description: |
+    API для отправки логов от микросервисов в PostgreSQL через NATS.
+defaultContentType: application/json
+servers:
+  natsServer:
+    host: warmhouse.com:18092
+    protocol: nats
+    description: сервер NATS.
+channels:
+  logs.{service}.{level}:
+    address: 'logs.{service}.{level}'
+    messages:
+      LogMessage:
+        $ref: '#/components/messages/LogMessage'
+    description: |
+      Канал для логов микросервисов.  
+      `{service}` — имя сервиса (ModuleRegistrationService, AuthService, ModuleService).  
+      `{level}` — уровень лога (WARN, DEBUG, TRACE).
+  telemetry.{module_id}:
+    messages:
+      TelemetryMessage:
+        $ref: '#/components/messages/TelemetryMessage'
+    description: |
+      Канал для сообщений по сбору данных с датчиков  
+      `{module_id}` — идентификатор умного модуля.
+operations:
+  publishLog:
+    action: send
+    channel: 
+      $ref: '#/channels/logs.{service}.{level}'
+    summary: Публикация логов
+    description: Публикация логов от микросервисов ModuleRegistrationService, AuthService, ModuleService
+  consumeLog:
+    action: receive
+    channel: 
+      $ref: '#/channels/logs.{service}.{level}'
+    summary: Потребление логов
+    description: Потребление логов сервисом LogService
+  publishTelemetry:
+    action: send
+    channel: 
+      $ref: '#/channels/telemetry.{module_id}'
+    summary: Публикация телеметрии
+    description: Публикация сообщений от DataFetchService собраных с умных модулей 
+  consumeTelemetry:
+    action: receive
+    channel: 
+      $ref: '#/channels/telemetry.{module_id}'
+    summary: Потребление телеметрии
+    description: Потребление сообщений сервисом LogService
+components:
+  messages:
+    LogMessage:
+      name: LogMessage
+      title: LOG сообщение
+      summary: Сообщение с параметрами работы сервиса
+      contentType: 'application/json'
+      payload:
+        $ref: '#/components/schemas/LogMessagePayload'
+    TelemetryMessage:
+      name: TelemetryMessage
+      title: Телеметрия
+      summary: Сообщение с параметрами и значением на датчике
+      contentType: 'application/json'
+      payload:
+        $ref: '#/components/schemas/TelemetryMessagePayload'
+  schemas:
+    LogMessagePayload:
+      type: object
+      properties:
+        service:
+          type: string
+          description: Имя микросервиса
+        level:
+          type: string
+          description: Уровень логирования
+          enum: [WARN, DEBUG, TRACE]
+        message:
+          type: string
+          description: Логируемое сообщение
+        timestamp:
+          type: string
+          format: date-time
+          description: Дата и время логирования
+        metadata:
+          type: object
+          description: Метаданные
+          additionalProperties: true
+    TelemetryMessagePayload:
+      type: object
+      properties:
+        module_id:
+          type: string
+          description: идентификатор датчика
+        mesageType:
+          type: string
+          description: тип сообщения
+          enum: [telemetry, statusUpdate, settingsUpdate, healthCheck]
+        message:
+          type: string
+          description: сообщение
+        timestamp:
+          type: string
+          format: date-time
+          description: Дата и время сообщения
+        metadata:
+          type: object
+          description: Метаданные
+          additionalProperties: true
+x-services:
+  AuthService:
+    description: Сервис управления данными пользователей
+    operations:
+      - $ref: '#/operations/publishLog'
+  
+  ModuleRegistrationService:
+    description: Сервис регистрации модулей
+    operations:
+      - $ref: '#/operations/publishLog'
+  
+  ModuleService:
+    description: Сервис управления модулями
+    operations:
+      - $ref: '#/operations/publishLog'
+
+  DataFetchService:
+    description: Сервис сбора данных с АПИ модулей
+    operations:
+      - $ref: '#/operations/publishTelemetry'
+
+  LogService:
+    description: Сервис пишуший логи и сообщения телеметрии в БД Postgres
+    operations:
+      - $ref: '#/operations/consumeLog'
+      - $ref: '#/operations/consumeTelemetry'
+    x-actions:
+      - name: update-EventLog-table
+        description: Обновляет таблицу EventLog хранящую события происходящие в микросервисах
+      - name: update-Telemetry-table
+        description: Обновляет таблицу EventLog хранящую события происходящие в микросервисах
